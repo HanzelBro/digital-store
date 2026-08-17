@@ -2,6 +2,11 @@
 require_once __DIR__ . '/../../config/db.php';
 requireAdmin();
 $currentPage = basename($_SERVER['PHP_SELF'], '.php');
+
+// Ambil jumlah pending order awal untuk badge sidebar
+$pdo_header = getDB();
+$pendingBadge = (int)$pdo_header->query("SELECT COUNT(*) FROM orders WHERE payment_status = 'pending'")->fetchColumn();
+$initialMaxId = (int)$pdo_header->query("SELECT COALESCE(MAX(id), 0) FROM orders")->fetchColumn();
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -32,9 +37,10 @@ code,.mono{font-family:'Cascadia Code','Fira Code',monospace;font-size:.85em}
 .sidebar-brand{padding:22px 20px;font-family:'Cascadia Code',monospace;font-weight:700;font-size:1.1rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
 .sidebar-brand span{color:var(--accent);font-size:1.3rem}
 .sidebar-nav{flex:1;padding:16px 12px}
-.sidebar-nav a{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:var(--rs);color:var(--muted);font-size:.88rem;font-weight:500;margin-bottom:4px;transition:all var(--t)}
+.sidebar-nav a{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;border-radius:var(--rs);color:var(--muted);font-size:.88rem;font-weight:500;margin-bottom:4px;transition:all var(--t)}
 .sidebar-nav a:hover{background:var(--hover);color:var(--text)}
 .sidebar-nav a.active{background:rgba(108,99,255,.12);color:var(--alight);border:1px solid rgba(108,99,255,.25)}
+.sidebar-badge{background:var(--yellow);color:#0D1117;font-size:.72rem;font-weight:800;padding:2px 7px;border-radius:999px;line-height:1}
 .sidebar-foot{padding:16px;border-top:1px solid var(--border)}
 .main{flex:1;padding:32px 36px;max-width:calc(100% - 230px)}
 
@@ -103,6 +109,17 @@ tr:hover td{background:rgba(255,255,255,.015)}
     .main{max-width:100%;padding:20px}
     .form-row{grid-template-columns:1fr}
 }
+
+/* NOTIFICATION POPUP */
+#notif-container{position:fixed;bottom:24px;right:24px;z-index:99999;display:flex;flex-direction:column;gap:12px;max-width:380px;width:100%;pointer-events:none}
+.notif-toast{pointer-events:auto;background:#161B22;border:1px solid #3FB950;box-shadow:0 10px 30px rgba(0,0,0,.5),0 0 15px rgba(63,185,80,.25);border-radius:12px;padding:16px 18px;color:#F0F0F5;animation:notifIn .4s cubic-bezier(.175,.885,.32,1.275) forwards}
+@keyframes notifIn{from{opacity:0;transform:translateY(30px) scale(.9)}to{opacity:1;transform:translateY(0) scale(1)}}
+.notif-head{display:flex;align-items:center;justify-content:space-between;font-size:.82rem;font-weight:700;color:#3FB950;margin-bottom:6px}
+.notif-body{font-size:.9rem;line-height:1.4}
+.notif-body strong{color:#8B85FF}
+.notif-foot{display:flex;align-items:center;justify-content:space-between;margin-top:8px;padding-top:8px;border-top:1px solid #21262D}
+.notif-close{background:none;border:none;color:#8B8FA8;cursor:pointer;font-size:1.1rem;line-height:1}
+.notif-close:hover{color:#F0F0F5}
 </style>
 </head>
 <body>
@@ -110,13 +127,93 @@ tr:hover td{background:rgba(255,255,255,.015)}
     <aside class="sidebar">
         <div class="sidebar-brand"><span>‖</span> HanzelStore Admin</div>
         <nav class="sidebar-nav">
-            <a href="dashboard.php" class="<?= $currentPage === 'dashboard' ? 'active' : '' ?>">📊 Dashboard</a>
-            <a href="orders.php" class="<?= in_array($currentPage, ['orders','order_detail']) ? 'active' : '' ?>">🧾 Pesanan</a>
-            <a href="products.php" class="<?= in_array($currentPage, ['products','product_form']) ? 'active' : '' ?>">📦 Produk</a>
-            <a href="../index.php" target="_blank">🌐 Lihat Toko</a>
+            <a href="dashboard.php" class="<?= $currentPage === 'dashboard' ? 'active' : '' ?>">
+                <span>📊 Dashboard</span>
+            </a>
+            <a href="orders.php" class="<?= in_array($currentPage, ['orders','order_detail']) ? 'active' : '' ?>">
+                <span>🧾 Pesanan</span>
+                <span class="sidebar-badge" id="pending-badge" style="<?= $pendingBadge > 0 ? '' : 'display:none' ?>"><?= $pendingBadge ?></span>
+            </a>
+            <a href="products.php" class="<?= in_array($currentPage, ['products','product_form']) ? 'active' : '' ?>">
+                <span>📦 Produk</span>
+            </a>
+            <a href="../index.php" target="_blank">
+                <span>🌐 Lihat Toko</span>
+            </a>
         </nav>
         <div class="sidebar-foot">
             <a href="logout.php" class="btn btn-outline btn-block">🚪 Logout</a>
         </div>
     </aside>
     <main class="main">
+
+    <!-- Notifikasi Popup -->
+    <div id="notif-container"></div>
+
+    <script>
+    (function(){
+        let lastId = <?= $initialMaxId ?>;
+        const pendingBadge = document.getElementById('pending-badge');
+
+        /* ── Suara notifikasi (Web Audio API) ── */
+        function playNotifSound(){
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc  = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+                osc.frequency.setValueAtTime(880, ctx.currentTime + 0.12);
+                gain.gain.setValueAtTime(0.25, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.35);
+                osc.connect(gain); gain.connect(ctx.destination);
+                osc.start(); osc.stop(ctx.currentTime + 0.35);
+            } catch(e){}
+        }
+
+        /* ── Tampilkan popup toast ── */
+        function showToast(o){
+            playNotifSound();
+            const c = document.getElementById('notif-container');
+            const t = document.createElement('div');
+            t.className = 'notif-toast';
+            t.innerHTML =
+                '<div class="notif-head"><span>🎉 ORDERAN BARU MASUK!</span><button class="notif-close" onclick="this.closest(\'.notif-toast\').remove()">&times;</button></div>' +
+                '<div class="notif-body"><strong>'+o.customer_name+'</strong> baru saja membuat pesanan sebesar <strong>'+o.total_formatted+'</strong></div>' +
+                '<div class="notif-foot">' +
+                '<span style="font-size:.78rem;color:#8B8FA8;font-family:monospace">'+o.order_code+' &bull; '+o.created_at+'</span>' +
+                '<a href="order_detail.php?code='+encodeURIComponent(o.order_code)+'" class="btn btn-primary btn-sm" style="padding:4px 10px;font-size:.75rem">Lihat Detail</a></div>';
+            c.appendChild(t);
+
+            // Browser Notification
+            if("Notification" in window && Notification.permission === "granted"){
+                new Notification("🛒 Orderan Baru!", { body: o.customer_name+' ('+o.order_code+') - '+o.total_formatted });
+            }
+            // Auto-hapus 10 detik
+            setTimeout(function(){ if(t.parentNode){ t.style.opacity='0'; t.style.transform='translateY(20px)'; t.style.transition='.3s ease'; setTimeout(function(){t.remove();},300); }}, 10000);
+        }
+
+        // Minta izin Notifikasi
+        if("Notification" in window && Notification.permission === "default") Notification.requestPermission();
+
+        /* ── Polling ke server setiap 6 detik ── */
+        function poll(){
+            fetch('check_new_orders.php?last_id='+lastId)
+                .then(function(r){return r.json()})
+                .then(function(d){
+                    if(!d.success) return;
+                    if(d.max_id > lastId) lastId = d.max_id;
+
+                    // Update badge pending
+                    if(pendingBadge){
+                        if(d.pending_count > 0){ pendingBadge.textContent = d.pending_count; pendingBadge.style.display='inline-block'; }
+                        else { pendingBadge.style.display='none'; }
+                    }
+                    // Tampilkan popup
+                    if(d.has_new && d.new_orders) d.new_orders.forEach(showToast);
+                })
+                .catch(function(){});
+        }
+        setInterval(poll, 6000);
+    })();
+    </script>
