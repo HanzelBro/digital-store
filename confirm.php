@@ -22,22 +22,26 @@ $success = false;
 $transferDate = date('Y-m-d');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$existing) {
-    $senderName    = trim($_POST['sender_name'] ?? '');
-    $paymentSource = trim($_POST['payment_source'] ?? '');
-    $transferAmt   = (float)($_POST['transfer_amount'] ?? 0);
-    $transferDate  = $_POST['transfer_date'] ?? date('Y-m-d');
-    $notes         = trim($_POST['notes'] ?? '');
+    if (!verifyCsrfToken()) {
+        $errors[] = 'Sesi form telah kedaluwarsa. Silakan refresh halaman dan coba lagi.';
+    } else {
+        $senderName    = trim($_POST['sender_name'] ?? '');
+        $paymentSource = trim($_POST['payment_source'] ?? '');
+        $transferAmt   = (float)($_POST['transfer_amount'] ?? 0);
+        $transferDate  = $_POST['transfer_date'] ?? date('Y-m-d');
+        $notes         = trim($_POST['notes'] ?? '');
 
-    if (!$senderName)      $errors[] = 'Nama pengirim wajib diisi.';
-    if (!$paymentSource)   $errors[] = 'Sumber pembayaran wajib diisi.';
-    if ($transferAmt < 1)  $errors[] = 'Jumlah pembayaran tidak valid.';
-    if (!$transferDate)    $errors[] = 'Tanggal pembayaran wajib diisi.';
+        if (!$senderName)      $errors[] = 'Nama pengirim wajib diisi.';
+        if (!$paymentSource)   $errors[] = 'Sumber pembayaran wajib diisi.';
+        if ($transferAmt < 1)  $errors[] = 'Jumlah pembayaran tidak valid.';
+        if (!$transferDate)    $errors[] = 'Tanggal pembayaran wajib diisi.';
 
-    if (empty($errors)) {
-        $stmt2 = $pdo->prepare("INSERT INTO payment_confirmations (order_id,order_code,sender_name,bank_name,transfer_amount,transfer_date,notes) VALUES (?,?,?,?,?,?,?)");
-        $stmt2->execute([$order['id'], $orderCode, $senderName, $paymentSource, $transferAmt, $transferDate, $notes]);
-        $pdo->prepare("UPDATE orders SET payment_status='pending' WHERE id=?")->execute([$order['id']]);
-        $success = true;
+        if (empty($errors)) {
+            $stmt2 = $pdo->prepare("INSERT INTO payment_confirmations (order_id,order_code,sender_name,bank_name,transfer_amount,transfer_date,notes) VALUES (?,?,?,?,?,?,?)");
+            $stmt2->execute([$order['id'], $orderCode, $senderName, $paymentSource, $transferAmt, $transferDate, $notes]);
+            $pdo->prepare("UPDATE orders SET payment_status='pending' WHERE id=?")->execute([$order['id']]);
+            $success = true;
+        }
     }
 }
 
@@ -69,7 +73,7 @@ $sourceLabel = $order['payment_method'] === 'e_wallet' ? 'E-Wallet yang digunaka
         <span class="success-ico">🎉</span>
         <h2>Konfirmasi Terkirim!</h2>
         <p style="color:var(--muted);margin-top:10px">Terima kasih! Tim kami akan memverifikasi dalam <strong>1×24 jam</strong>.</p>
-        <div class="order-code"><?= $orderCode ?></div>
+        <div class="order-code"><?= htmlspecialchars($orderCode) ?></div>
         <p style="font-size:.82rem;color:var(--dim)">Simpan kode ini untuk pelacakan</p>
         <a href="index.php" class="btn btn-primary btn-lg" style="margin-top:22px">Kembali Belanja</a>
     </div>
@@ -79,15 +83,15 @@ $sourceLabel = $order['payment_method'] === 'e_wallet' ? 'E-Wallet yang digunaka
         <span class="success-ico">✅</span>
         <h2>Sudah Dikonfirmasi</h2>
         <p style="color:var(--muted);margin-top:10px">Konfirmasi untuk pesanan ini sudah pernah dikirim.</p>
-        <div class="order-code"><?= $orderCode ?></div>
+        <div class="order-code"><?= htmlspecialchars($orderCode) ?></div>
         <p style="font-size:.82rem;color:var(--yellow)">Status: Menunggu Verifikasi</p>
         <a href="index.php" class="btn btn-outline" style="margin-top:20px">Kembali ke Toko</a>
     </div>
 
 <?php else: ?>
     <div class="page-head">
-        <h1>✅ Konfirmasi Pembayaran</h1>
-        <p style="color:var(--muted);margin-top:5px">Pesanan #<?= $orderCode ?></p>
+        <h1>Konfirmasi Pembayaran</h1>
+        <p style="color:var(--muted);margin-top:5px">Kode Pesanan: #<?= htmlspecialchars($orderCode) ?></p>
     </div>
 
     <?php if (!empty($errors)): ?>
@@ -108,8 +112,8 @@ $sourceLabel = $order['payment_method'] === 'e_wallet' ? 'E-Wallet yang digunaka
                         <p style="color:var(--muted);margin-bottom:16px;line-height:1.75"><?= htmlspecialchars($instruction['description']) ?></p>
                         <?php if ($order['payment_method'] === 'qris'): ?>
                             <?php if ($instruction['image_exists']): ?>
-                                <img src="<?= htmlspecialchars($instruction['image']) ?>" alt="QRIS HanzelStore" style="width:100%;max-width:320px;border-radius:12px;border:1px solid var(--border)">
-                                <p style="color:var(--dim);font-size:.82rem;margin-top:12px">Jika belum ada, Anda bisa menaruh file QRIS di <code>assets/img/qris.png</code>.</p>
+                                <img src="<?= htmlspecialchars($instruction['image']) ?>" alt="QRIS Pembayaran HanzelStore" width="320" height="320" style="width:100%;max-width:320px;border-radius:var(--r);border:1px solid var(--border)">
+                                <p style="color:var(--dim);font-size:.82rem;margin-top:12px">Pindai kode QR di atas menggunakan aplikasi mobile banking atau e-wallet.</p>
                             <?php else: ?>
                                 <div class="alert alert-danger" style="margin-top:0">
                                     ⚠ Gambar QRIS belum tersedia. Silakan unggah file QRIS ke <code>assets/img/qris.png</code>.
@@ -125,6 +129,7 @@ $sourceLabel = $order['payment_method'] === 'e_wallet' ? 'E-Wallet yang digunaka
             <div class="form-section">
                 <div class="form-title">Form Konfirmasi</div>
                 <form method="POST">
+                    <?= csrfField() ?>
                     <div class="form-group">
                         <label class="form-label">Nama Pengirim *</label>
                         <input type="text" name="sender_name" class="form-control" placeholder="Nama di rekening atau aplikasi" required>
@@ -150,7 +155,7 @@ $sourceLabel = $order['payment_method'] === 'e_wallet' ? 'E-Wallet yang digunaka
                         <label class="form-label">Catatan (opsional)</label>
                         <textarea name="notes" class="form-control" rows="2" placeholder="Mis: transfer via m-banking jam 10 pagi"></textarea>
                     </div>
-                    <button type="submit" class="btn btn-success btn-block btn-lg">📨 Kirim Konfirmasi</button>
+                    <button type="submit" class="btn btn-success btn-block btn-lg">Kirim Konfirmasi Pembayaran</button>
                 </form>
             </div>
         </div>
@@ -160,7 +165,7 @@ $sourceLabel = $order['payment_method'] === 'e_wallet' ? 'E-Wallet yang digunaka
                 <div class="s-title">Ringkasan Pesanan</div>
                 <div class="bank-box" style="margin-top:0;margin-bottom:14px">
                     <h4>Kode Pesanan</h4>
-                    <div style="font-family:monospace;font-size:1.05rem;font-weight:700;color:var(--alight);letter-spacing:.08em"><?= $orderCode ?></div>
+                    <div style="font-family:monospace;font-size:1.05rem;font-weight:700;color:var(--alight);letter-spacing:.08em"><?= htmlspecialchars($orderCode) ?></div>
                 </div>
                 <div class="s-row"><span class="s-label">Nama</span><span><?= htmlspecialchars($order['customer_name']) ?></span></div>
                 <div class="s-row"><span class="s-label">Email</span><span style="font-size:.8rem"><?= htmlspecialchars($order['customer_email']) ?></span></div>

@@ -1,0 +1,20 @@
+# ==============================================================================
+# Cegah eksekusi script apapun di direktori assets/img
+# ==============================================================================
+
+# Blokir pemanggilan script PHP atau executable
+<FilesMatch "\.(php|phtml|php3|php4|php5|php7|php8|phps|cgi|pl|py|sh)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Matikan engine PHP jika modul Apache PHP aktif
+<IfModule mod_php.c>
+    php_flag engine off
+</IfModule>
+<IfModule mod_php7.c>
+    php_flag engine off
+</IfModule>
+<IfModule mod_php8.c>
+    php_flag engine off
+</IfModule>

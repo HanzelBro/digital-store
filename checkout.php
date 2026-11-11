@@ -8,29 +8,33 @@ if (empty($cart)) { header('Location: cart.php'); exit; }
 $errors = []; $input = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $input['name']    = trim($_POST['name'] ?? '');
-    $input['email']   = trim($_POST['email'] ?? '');
-    $input['phone']   = trim($_POST['phone'] ?? '');
-    $input['payment'] = $_POST['payment'] ?? 'qris';
-    $input['notes']   = trim($_POST['notes'] ?? '');
+    if (!verifyCsrfToken()) {
+        $errors[] = 'Sesi form telah kedaluwarsa. Silakan refresh halaman dan coba lagi.';
+    } else {
+        $input['name']    = trim($_POST['name'] ?? '');
+        $input['email']   = trim($_POST['email'] ?? '');
+        $input['phone']   = trim($_POST['phone'] ?? '');
+        $input['payment'] = $_POST['payment'] ?? 'qris';
+        $input['notes']   = trim($_POST['notes'] ?? '');
 
-    if (!$input['name']) $errors[] = 'Nama lengkap wajib diisi.';
-    if (!filter_var($input['email'], FILTER_VALIDATE_EMAIL)) $errors[] = 'Format email tidak valid.';
+        if (!$input['name']) $errors[] = 'Nama lengkap wajib diisi.';
+        if (!filter_var($input['email'], FILTER_VALIDATE_EMAIL)) $errors[] = 'Format email tidak valid.';
 
-    if (empty($errors)) {
-        $pdo  = getDB();
-        $code = generateOrderCode();
-        $stmt = $pdo->prepare("INSERT INTO orders (order_code,customer_name,customer_email,customer_phone,total_amount,payment_method,notes) VALUES (?,?,?,?,?,?,?)");
-        $stmt->execute([$code, $input['name'], $input['email'], $input['phone'], $total, $input['payment'], $input['notes']]);
-        $orderId = $pdo->lastInsertId();
-        $stmt2 = $pdo->prepare("INSERT INTO order_items (order_id,product_id,product_name,duration_label,price) VALUES (?,?,?,?,?)");
-        foreach ($cart as $item) {
-            $stmt2->execute([$orderId, $item['product_id'], $item['name'], $item['duration_label'], $item['price']]);
+        if (empty($errors)) {
+            $pdo  = getDB();
+            $code = generateOrderCode();
+            $stmt = $pdo->prepare("INSERT INTO orders (order_code,customer_name,customer_email,customer_phone,total_amount,payment_method,notes) VALUES (?,?,?,?,?,?,?)");
+            $stmt->execute([$code, $input['name'], $input['email'], $input['phone'], $total, $input['payment'], $input['notes']]);
+            $orderId = $pdo->lastInsertId();
+            $stmt2 = $pdo->prepare("INSERT INTO order_items (order_id,product_id,product_name,duration_label,price) VALUES (?,?,?,?,?)");
+            foreach ($cart as $item) {
+                $stmt2->execute([$orderId, $item['product_id'], $item['name'], $item['duration_label'], $item['price']]);
+            }
+            $_SESSION['last_order_id']   = $orderId;
+            $_SESSION['last_order_code'] = $code;
+            $_SESSION['cart'] = [];
+            header("Location: confirm.php?order=$code"); exit;
         }
-        $_SESSION['last_order_id']   = $orderId;
-        $_SESSION['last_order_code'] = $code;
-        $_SESSION['cart'] = [];
-        header("Location: confirm.php?order=$code"); exit;
     }
 }
 
@@ -58,6 +62,7 @@ $methods = [
             <div class="form-section">
                 <div class="form-title">Informasi Pembeli</div>
                 <form method="POST" id="coForm">
+                    <?= csrfField() ?>
                     <div class="form-group">
                         <label class="form-label">Nama *</label>
                         <input type="text" name="name" class="form-control" placeholder="Nama" value="<?= htmlspecialchars($input['name'] ?? '') ?>" required>
@@ -92,7 +97,7 @@ $methods = [
                 </label>
                 <?php endforeach; ?>
                 <button type="submit" form="coForm" class="btn btn-primary btn-block btn-lg" style="margin-top:20px">
-                    🔒 Konfirmasi Pesanan - <?= formatPrice($total) ?>
+                    Proses Pembayaran (<?= formatPrice($total) ?>)
                 </button>
             </div>
         </div>
@@ -126,11 +131,11 @@ $methods = [
                     <span class="tag-green">Gratis</span>
                 </div>
                 <div class="s-row total">
-                    <span>Total</span>
+                    <span>Total Tagihan</span>
                     <span><?= formatPrice($total) ?></span>
                 </div>
-                <div style="margin-top:14px;font-size:.76rem;color:var(--dim);text-align:center;line-height:1.8">
-                    Dengan melanjutkan, kamu menyetujui syarat & ketentuan HanzelStore.
+                <div style="margin-top:14px;font-size:.78rem;color:var(--dim);text-align:center;line-height:1.7">
+                    Dengan melanjutkan pesanan, Anda menyetujui ketentuan layanan HanzelStore.
                 </div>
             </div>
         </div>

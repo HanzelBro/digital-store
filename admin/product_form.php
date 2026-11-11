@@ -17,6 +17,9 @@ if ($id) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!verifyCsrfToken()) {
+        die('Akses ditolak: CSRF token tidak valid.');
+    }
     $name        = trim($_POST['name'] ?? '');
     $description = trim($_POST['description'] ?? '');
     $shortDesc   = trim($_POST['short_desc'] ?? '');
@@ -50,13 +53,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $imageName = $p['image'] ?? null;
     $newImageUploaded = false;
     if (!empty($_FILES['image']['name'])) {
-        $allowed = ['jpg','jpeg','png','webp'];
-        $ext = strtolower(pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION));
-        if (!in_array($ext, $allowed)) {
-            $errors[] = 'Format gambar harus JPG, PNG, atau WEBP.';
-        } elseif ($_FILES['image']['size'] > 2 * 1024 * 1024) {
-            $errors[] = 'Ukuran gambar maksimal 2MB.';
+        $validation = validateUploadedImage($_FILES['image'], 2);
+        if (!$validation['valid']) {
+            $errors[] = $validation['error'];
         } else {
+            $ext = $validation['ext'];
             $newName = generateSlug($name) . '-' . time() . '.' . $ext;
             $dest = __DIR__ . '/../assets/img/' . $newName;
             if (move_uploaded_file($_FILES['image']['tmp_name'], $dest)) {
@@ -150,6 +151,7 @@ if (empty($existingDurations)) {
 <?php endif; ?>
 
 <form method="POST" enctype="multipart/form-data" class="form-card" style="max-width:760px">
+    <?= csrfField() ?>
 
     <div class="form-group">
         <label class="form-label">Nama Produk *</label>

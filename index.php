@@ -1,7 +1,7 @@
 <?php
 require_once 'config/db.php';
 
-$pageTitle = 'HanzelStore - Software & Tools Premium';
+$pageTitle = 'HanzelStore - Software & Akun Premium';
 require_once 'includes/header.php';
 
 $pdo    = getDB();
@@ -24,14 +24,13 @@ $cats = $pdo->query("SELECT DISTINCT category FROM products ORDER BY category")-
 <section class="hero">
     <div class="container">
         <div class="hero-inner">
-            <div class="eyebrow"> Premium Digital Products by HanzelStore</div>
-            <h1>Software &amp; Tools Premium <br> untuk <span> Membantu Anda </span></h1>
-            <p class="hero-sub">Temukan produk digital premium yang siap membantu kamu kerja lebih cepat &amp; kreatif.</p>
-            <form method="GET" class="search-row">
-                <input type="text" name="search" class="form-control" placeholder="Cari produk…" value="<?= htmlspecialchars($search) ?>" style="flex:1">
-                <button type="submit" class="btn btn-primary" style="flex:none">🔍 Cari</button>
+            <h1>Lisensi Software &amp; Akun Premium <br><span>Siap Digunakan Langsung</span></h1>
+            <p class="hero-sub">Layanan resmi akun berlangganan desain, video, dan hiburan dengan aktivasi cepat serta garansi transaksi aman.</p>
+            <form method="GET" class="search-row" role="search">
+                <input type="text" name="search" class="form-control" placeholder="Cari nama software atau tools…" value="<?= htmlspecialchars($search) ?>" aria-label="Cari produk digital" style="flex:1">
+                <button type="submit" class="btn btn-primary" style="flex:none">Cari</button>
                 <?php if ($search || $cat): ?>
-                    <a href="index.php" class="btn btn-outline" style="flex:none">✕</a>
+                    <a href="index.php" class="btn btn-outline" style="flex:none" aria-label="Hapus filter pencarian">✕</a>
                 <?php endif; ?>
             </form>
         </div>
@@ -40,8 +39,8 @@ $cats = $pdo->query("SELECT DISTINCT category FROM products ORDER BY category")-
 
 <section class="section">
     <div class="container">
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:28px;align-items:center">
-            <span style="font-size:.8rem;color:var(--dim)">Filter:</span>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:28px;align-items:center" role="navigation" aria-label="Filter Kategori">
+            <span style="font-size:.82rem;font-weight:600;color:var(--dim)">Kategori:</span>
             <a href="index.php<?= $search ? '?search='.urlencode($search) : '' ?>"
                class="btn btn-sm <?= !$cat ? 'btn-primary' : 'btn-outline' ?>">Semua</a>
             <?php foreach ($cats as $c): ?>
@@ -50,17 +49,17 @@ $cats = $pdo->query("SELECT DISTINCT category FROM products ORDER BY category")-
             <?php endforeach; ?>
         </div>
 
-        <div style="margin-bottom:28px">
-            <h2><?= $search ? 'Hasil: "'.htmlspecialchars($search).'"' : 'Semua Produk' ?></h2>
-            <p style="color:var(--muted);margin-top:5px"><?= count($products) ?> produk ditemukan</p>
+        <div style="margin-bottom:24px">
+            <h2><?= $search ? 'Hasil Pencarian: "'.htmlspecialchars($search).'"' : 'Katalog Pilihan' ?></h2>
+            <p style="color:var(--muted);font-size:.9rem;margin-top:4px"><?= count($products) ?> produk tersedia</p>
         </div>
 
         <?php if (empty($products)): ?>
             <div class="empty">
-                <span class="empty-ico">🔍</span>
-                <h3>Produk tidak ditemukan</h3>
-                <p>Coba kata kunci lain atau hapus filter.</p>
-                <a href="index.php" class="btn btn-primary" style="margin-top:16px">Lihat Semua</a>
+                <span class="empty-ico" aria-hidden="true">🔍</span>
+                <h3>Produk Tidak Ditemukan</h3>
+                <p>Tidak ada produk yang cocok dengan pencarian Anda saat ini.</p>
+                <a href="index.php" class="btn btn-primary" style="margin-top:16px">Tampilkan Semua Produk</a>
             </div>
         <?php else: ?>
             <div class="product-grid">
@@ -68,11 +67,11 @@ $cats = $pdo->query("SELECT DISTINCT category FROM products ORDER BY category")-
                     $bcls      = 'b-' . strtolower(str_replace(' ', '', $p['badge'] ?? ''));
                     $lowest    = getLowestPrice($p['id']);
                 ?>
-                <div class="card">
+                <article class="card">
                     <div class="card-head">
-                        <div class="p-icon">
+                        <div class="p-icon" aria-hidden="true">
                             <?php if (!empty($p['image'])): ?>
-                                <img src="<?= SITE_URL ?>/assets/img/<?= htmlspecialchars($p['image']) ?>" alt="<?= htmlspecialchars($p['name']) ?>">
+                                <img src="<?= SITE_URL ?>/assets/img/<?= htmlspecialchars($p['image']) ?>" alt="<?= htmlspecialchars($p['name']) ?>" width="54" height="54" loading="lazy" style="object-fit:cover;border-radius:var(--rs)">
                             <?php else: ?>
                                 <?= htmlspecialchars($p['icon']) ?>
                             <?php endif; ?>
@@ -83,21 +82,21 @@ $cats = $pdo->query("SELECT DISTINCT category FROM products ORDER BY category")-
                     </div>
                     <div class="card-body">
                         <span class="p-cat"><?= htmlspecialchars($p['category']) ?></span>
-                        <div class="p-name"><?= htmlspecialchars($p['name']) ?></div>
-                        <div class="p-desc"><?= htmlspecialchars($p['short_desc']) ?></div>
+                        <h3 class="p-name"><?= htmlspecialchars($p['name']) ?></h3>
+                        <p class="p-desc"><?= htmlspecialchars($p['short_desc']) ?></p>
                     </div>
                     <div class="card-foot">
                         <div class="price-row">
                             <div>
-                                <div style="font-size:.72rem;color:var(--dim);margin-bottom:2px">Mulai dari</div>
+                                <div style="font-size:.75rem;color:var(--dim);margin-bottom:2px">Mulai dari</div>
                                 <div class="price-main"><?= $lowest > 0 ? formatPrice($lowest) : '-' ?></div>
                             </div>
                         </div>
                         <div class="card-actions">
-                            <a href="product.php?slug=<?= urlencode($p['slug']) ?>" class="btn btn-primary btn-block">Lihat Paket & Beli</a>
+                            <a href="product.php?slug=<?= urlencode($p['slug']) ?>" class="btn btn-primary btn-block">Pilih Paket &amp; Beli</a>
                         </div>
                     </div>
-                </div>
+                </article>
                 <?php endforeach; ?>
             </div>
         <?php endif; ?>

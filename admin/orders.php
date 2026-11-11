@@ -7,6 +7,9 @@ $status = $_GET['status'] ?? '';
 $pdo    = getDB();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_order'])) {
+    if (!verifyCsrfToken()) {
+        die('Akses ditolak: CSRF token tidak valid.');
+    }
     $orderId = (int)($_POST['order_id'] ?? 0);
     if ($orderId > 0) {
         $stmt = $pdo->prepare("DELETE FROM payment_confirmations WHERE order_id = ?");
@@ -81,6 +84,7 @@ $orders = $stmt->fetchAll();
                 <td style="display:flex;gap:6px;justify-content:flex-end;">
                     <a href="order_detail.php?code=<?= urlencode($o['order_code']) ?>" class="btn btn-outline btn-sm">Detail</a>
                     <form method="POST" onsubmit="return confirm('Hapus pesanan <?= htmlspecialchars($o['order_code']) ?>?');" style="margin:0;">
+                        <?= csrfField() ?>
                         <input type="hidden" name="order_id" value="<?= $o['id'] ?>">
                         <button type="submit" name="delete_order" value="1" class="btn btn-danger btn-sm">Hapus</button>
                     </form>

@@ -6,6 +6,9 @@
 
 date_default_timezone_set('Asia/Jakarta');
 
+// Ubah ke 'production' saat website sudah di-hosting
+define('ENVIRONMENT', 'development'); 
+
 // Konfigurasi Database
 define('DB_HOST', 'localhost');          // Host database (misal: localhost / sqlXXX.infinityfree.com)
 define('DB_USER', 'root');               // Username database
@@ -14,12 +17,34 @@ define('DB_NAME', 'digital_store');      // Nama database
 
 // Konfigurasi Situs
 define('SITE_NAME', 'HanzelStore');
-define('SITE_URL', 'http://localhost/digital-store'); // URL situs (tanpa slash di akhir)
+define('SITE_URL', 'http://localhost/digital-store'); // URL situs (tanpa slash di akhir, gunakan https:// saat production)
 define('CURRENCY', 'Rp');
 
 // =============================================
-// Helper Functions (sama seperti db.php)
+// Keamanan Session & Cookie
 // =============================================
+if (session_status() === PHP_SESSION_NONE) {
+    ini_set('session.use_only_cookies', 1);
+    ini_set('session.use_strict_mode', 1);
+
+    $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || 
+               (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443) ||
+               (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
+
+    session_set_cookie_params([
+        'lifetime' => 0,
+        'path'     => '/',
+        'domain'   => '',
+        'secure'   => $isHttps,
+        'httponly' => true,
+        'samesite' => 'Lax'
+    ]);
+    session_start();
+}
+
+// Muat modul security & kirim header keamanan HTTP
+require_once __DIR__ . '/../includes/security.php';
+sendSecurityHeaders();
 
 function getDB() {
     static $pdo = null;
@@ -32,9 +57,17 @@ function getDB() {
                 PDO::ATTR_EMULATE_PREPARES   => false,
             ]);
         } catch (PDOException $e) {
+            error_log('Database Connection Error: ' . $e->getMessage());
+            if (defined('ENVIRONMENT') && ENVIRONMENT === 'production') {
+                http_response_code(500);
+                die('<div style="font-family:sans-serif;max-width:500px;margin:50px auto;padding:24px;background:#fff;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,0.1);text-align:center;">
+                    <h3 style="color:#d9534f;margin-bottom:8px">Layanan Sedang Mengalami Kendala</h3>
+                    <p style="color:#666;font-size:0.95rem;line-height:1.5">Sistem database sedang dalam pemeliharaan atau tidak dapat dijangkau. Silakan coba kembali dalam beberapa saat.</p>
+                </div>');
+            }
             die('<div style="font-family:monospace;padding:20px;background:#1a0000;color:#ff6b6b;border:1px solid #ff0000;">
                 <strong>Database Error:</strong> ' . htmlspecialchars($e->getMessage()) . '
-                <br><small>Pastikan MySQL sudah berjalan dan database sudah dibuat</small>
+                <br><small>Pastikan MySQL sudah berjalan dan database sudah dibuat.</small>
             </div>');
         }
     }
@@ -68,11 +101,6 @@ function getLowestPrice($productId) {
     $stmt = $pdo->prepare("SELECT MIN(price) FROM product_durations WHERE product_id = ?");
     $stmt->execute([$productId]);
     return (float)$stmt->fetchColumn();
-}
-
-// Session
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
 }
 
 // ===== Cart helpers =====

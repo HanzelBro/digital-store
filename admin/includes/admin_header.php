@@ -17,15 +17,25 @@ $initialMaxId = (int)$pdo_header->query("SELECT COALESCE(MAX(id), 0) FROM orders
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-    --bg:#0D1117;--card:#161B22;--hover:#1C2333;
-    --accent:#6C63FF;--glow:rgba(108,99,255,.35);--alight:#8B85FF;
-    --text:#F0F0F5;--muted:#8B8FA8;--dim:#4A4E69;
-    --border:#21262D;--borderl:#30363D;
+    --bg:#0D1117;--card:#161B22;--hover:#1F242C;
+    --accent:#6C63FF;--accent-hover:#7E76FF;--alight:#8B85FF;
+    --text:#F0F0F5;--muted:#9BA1B6;--dim:#7E84A3;
+    --border:#262B34;--borderl:#353B47;
     --green:#3FB950;--red:#F85149;--yellow:#D29922;
-    --r:12px;--rs:8px;--t:.2s ease;
+    --r:8px;--rs:6px;--t:.15s ease;
 }
-body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;line-height:1.6}
-a{color:var(--alight);text-decoration:none}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;line-height:1.6}
+a{color:var(--alight);text-decoration:none;cursor:pointer}
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible{
+    outline:2px solid var(--accent);outline-offset:2px;
+}
+@media (prefers-reduced-motion: reduce){
+    *,*::before,*::after{
+        animation-duration:.01ms!important;
+        animation-iteration-count:1!important;
+        transition-duration:.01ms!important;
+    }
+}
 h1,h2,h3{line-height:1.3;font-weight:700}
 .container{max-width:1280px;margin:0 auto;padding:0 24px}
 img{max-width:100%;display:block}
@@ -73,11 +83,11 @@ tr:hover td{background:rgba(255,255,255,.015)}
 /* BUTTONS */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 18px;border-radius:var(--rs);font-size:.85rem;font-weight:600;cursor:pointer;border:none;transition:all var(--t);line-height:1;text-decoration:none;font-family:inherit}
 .btn-primary{background:var(--accent);color:#fff}
-.btn-primary:hover{background:var(--alight);box-shadow:0 4px 20px var(--glow)}
+.btn-primary:hover{background:var(--accent-hover);transform:translateY(-1px)}
 .btn-outline{background:transparent;border:1px solid var(--borderl);color:var(--muted)}
-.btn-outline:hover{border-color:var(--accent);color:var(--accent)}
-.btn-danger{background:rgba(248,81,73,.15);color:var(--red);border:1px solid rgba(248,81,73,.3)}
-.btn-danger:hover{background:rgba(248,81,73,.25)}
+.btn-outline:hover{border-color:var(--accent);color:var(--text);background:rgba(108,99,255,.05)}
+.btn-danger{background:rgba(248,81,73,.12);color:var(--red);border:1px solid rgba(248,81,73,.3)}
+.btn-danger:hover{background:rgba(248,81,73,.22)}
 .btn-success{background:var(--green);color:#0D1117}
 .btn-success:hover{background:#56d364}
 .btn-sm{padding:6px 13px;font-size:.78rem}
@@ -88,7 +98,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
 .form-group{margin-bottom:16px}
 .form-label{display:block;font-size:.84rem;font-weight:600;color:var(--muted);margin-bottom:7px}
 .form-control{width:100%;background:var(--bg);border:1px solid var(--borderl);color:var(--text);border-radius:var(--rs);padding:10px 14px;font-size:.9rem;font-family:inherit}
-.form-control:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--glow)}
+.form-control:focus{outline:none;border-color:var(--accent)}
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .form-hint{font-size:.76rem;color:var(--dim);margin-top:5px}
 
@@ -99,7 +109,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
 
 /* MISC */
 .empty{text-align:center;padding:60px 24px;color:var(--muted)}
-.thumb{width:42px;height:42px;border-radius:var(--rs);background:rgba(108,99,255,.08);border:1px solid rgba(108,99,255,.15);display:flex;align-items:center;justify-content:center;font-size:1.3rem;overflow:hidden;flex-shrink:0}
+.thumb{width:42px;height:42px;border-radius:var(--rs);background:rgba(108,99,255,.08);border:1px solid rgba(108,99,255,.2);display:flex;align-items:center;justify-content:center;font-size:1.3rem;overflow:hidden;flex-shrink:0}
 .thumb img{width:100%;height:100%;object-fit:cover}
 .flex-g{display:flex;align-items:center;gap:10px}
 
@@ -112,7 +122,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
 
 /* NOTIFICATION POPUP */
 #notif-container{position:fixed;bottom:24px;right:24px;z-index:99999;display:flex;flex-direction:column;gap:12px;max-width:380px;width:100%;pointer-events:none}
-.notif-toast{pointer-events:auto;background:#161B22;border:1px solid #3FB950;box-shadow:0 10px 30px rgba(0,0,0,.5),0 0 15px rgba(63,185,80,.25);border-radius:12px;padding:16px 18px;color:#F0F0F5;animation:notifIn .4s cubic-bezier(.175,.885,.32,1.275) forwards}
+.notif-toast{pointer-events:auto;background:#161B22;border:1px solid var(--borderl);box-shadow:0 8px 24px rgba(0,0,0,.6);border-radius:var(--r);padding:16px 18px;color:#F0F0F5;animation:notifIn .3s ease forwards}
 @keyframes notifIn{from{opacity:0;transform:translateY(30px) scale(.9)}to{opacity:1;transform:translateY(0) scale(1)}}
 .notif-head{display:flex;align-items:center;justify-content:space-between;font-size:.82rem;font-weight:700;color:#3FB950;margin-bottom:6px}
 .notif-body{font-size:.9rem;line-height:1.4}
@@ -171,23 +181,37 @@ tr:hover td{background:rgba(255,255,255,.015)}
             } catch(e){}
         }
 
+        /* ── Helper Escape HTML (Mencegah XSS) ── */
+        function escapeHtml(str){
+            if(str === null || str === undefined) return '';
+            var div = document.createElement('div');
+            div.textContent = String(str);
+            return div.innerHTML;
+        }
+
         /* ── Tampilkan popup toast ── */
         function showToast(o){
             playNotifSound();
             const c = document.getElementById('notif-container');
             const t = document.createElement('div');
             t.className = 'notif-toast';
+
+            const safeName  = escapeHtml(o.customer_name);
+            const safeTotal = escapeHtml(o.total_formatted);
+            const safeCode  = escapeHtml(o.order_code);
+            const safeTime  = escapeHtml(o.created_at);
+
             t.innerHTML =
                 '<div class="notif-head"><span>🎉 ORDERAN BARU MASUK!</span><button class="notif-close" onclick="this.closest(\'.notif-toast\').remove()">&times;</button></div>' +
-                '<div class="notif-body"><strong>'+o.customer_name+'</strong> baru saja membuat pesanan sebesar <strong>'+o.total_formatted+'</strong></div>' +
+                '<div class="notif-body"><strong>'+safeName+'</strong> baru saja membuat pesanan sebesar <strong>'+safeTotal+'</strong></div>' +
                 '<div class="notif-foot">' +
-                '<span style="font-size:.78rem;color:#8B8FA8;font-family:monospace">'+o.order_code+' &bull; '+o.created_at+'</span>' +
+                '<span style="font-size:.78rem;color:#8B8FA8;font-family:monospace">'+safeCode+' &bull; '+safeTime+'</span>' +
                 '<a href="order_detail.php?code='+encodeURIComponent(o.order_code)+'" class="btn btn-primary btn-sm" style="padding:4px 10px;font-size:.75rem">Lihat Detail</a></div>';
             c.appendChild(t);
 
             // Browser Notification
             if("Notification" in window && Notification.permission === "granted"){
-                new Notification("🛒 Orderan Baru!", { body: o.customer_name+' ('+o.order_code+') - '+o.total_formatted });
+                new Notification("🛒 Orderan Baru!", { body: String(o.customer_name)+' ('+String(o.order_code)+') - '+String(o.total_formatted) });
             }
             // Auto-hapus 10 detik
             setTimeout(function(){ if(t.parentNode){ t.style.opacity='0'; t.style.transform='translateY(20px)'; t.style.transition='.3s ease'; setTimeout(function(){t.remove();},300); }}, 10000);

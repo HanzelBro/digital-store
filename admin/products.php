@@ -4,20 +4,25 @@ requireAdmin();
 
 $pdo = getDB();
 
-// Hapus produk
-if (isset($_GET['delete'])) {
-    $id = (int)$_GET['delete'];
-    $stmt = $pdo->prepare("SELECT image FROM products WHERE id = ?");
-    $stmt->execute([$id]);
-    $prod = $stmt->fetch();
-    if ($prod && $prod['image']) {
-        $path = __DIR__ . '/../assets/img/' . $prod['image'];
-        if (file_exists($path)) @unlink($path);
+// Hapus produk (POST + CSRF)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_product'])) {
+    if (!verifyCsrfToken()) {
+        die('Akses ditolak: CSRF token tidak valid.');
     }
-    $pdo->prepare("DELETE FROM product_durations WHERE product_id = ?")->execute([$id]);
-    $pdo->prepare("DELETE FROM products WHERE id = ?")->execute([$id]);
-    header('Location: products.php?deleted=1');
-    exit;
+    $id = (int)($_POST['product_id'] ?? 0);
+    if ($id > 0) {
+        $stmt = $pdo->prepare("SELECT image FROM products WHERE id = ?");
+        $stmt->execute([$id]);
+        $prod = $stmt->fetch();
+        if ($prod && $prod['image']) {
+            $path = __DIR__ . '/../assets/img/' . $prod['image'];
+            if (file_exists($path)) @unlink($path);
+        }
+        $pdo->prepare("DELETE FROM product_durations WHERE product_id = ?")->execute([$id]);
+        $pdo->prepare("DELETE FROM products WHERE id = ?")->execute([$id]);
+        header('Location: products.php?deleted=1');
+        exit;
+    }
 }
 
 $pageTitle = 'Produk - Admin HanzelStore';
@@ -85,8 +90,11 @@ $products = $pdo->query("SELECT * FROM products ORDER BY id DESC")->fetchAll();
                 <td>
                     <div style="display:flex;gap:6px">
                         <a href="product_form.php?id=<?= $p['id'] ?>" class="btn btn-outline btn-sm">✏ Edit</a>
-                        <a href="products.php?delete=<?= $p['id'] ?>" class="btn btn-danger btn-sm"
-                           onclick="return confirm('Yakin hapus produk ini?')">🗑</a>
+                        <form method="POST" onsubmit="return confirm('Yakin hapus produk ini?');" style="margin:0;display:inline">
+                            <?= csrfField() ?>
+                            <input type="hidden" name="product_id" value="<?= $p['id'] ?>">
+                            <button type="submit" name="delete_product" value="1" class="btn btn-danger btn-sm" title="Hapus Produk">🗑</button>
+                        </form>
                     </div>
                 </td>
             </tr>

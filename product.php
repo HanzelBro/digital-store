@@ -42,15 +42,15 @@ $msg      = $_GET['msg'] ?? '';
     </nav>
 
     <?php if ($msg === 'added'): ?>
-        <div class="alert alert-success">✅ Ditambahkan ke keranjang! <a href="cart.php">Lihat keranjang →</a></div>
+        <div class="alert alert-success">✅ Berhasil ditambahkan ke keranjang. <a href="cart.php" style="font-weight:600;text-decoration:underline">Buka Keranjang</a></div>
     <?php endif; ?>
 
     <div class="two-col">
         <div>
             <div style="display:flex;align-items:center;gap:14px;margin-bottom:22px">
-                <div class="p-icon" style="width:68px;height:68px;font-size:2.6rem">
+                <div class="p-icon" style="width:68px;height:68px;font-size:2.4rem">
                     <?php if (!empty($p['image'])): ?>
-                        <img src="<?= SITE_URL ?>/assets/img/<?= htmlspecialchars($p['image']) ?>" alt="<?= htmlspecialchars($p['name']) ?>">
+                        <img src="<?= SITE_URL ?>/assets/img/<?= htmlspecialchars($p['image']) ?>" alt="<?= htmlspecialchars($p['name']) ?>" width="68" height="68" style="object-fit:cover;border-radius:var(--rs)">
                     <?php else: ?>
                         <?= htmlspecialchars($p['icon']) ?>
                     <?php endif; ?>
@@ -126,9 +126,9 @@ $msg      = $_GET['msg'] ?? '';
                     </div>
 
                     <input type="hidden" name="add_cart" value="1">
-                    <button type="submit" class="btn btn-primary btn-block btn-lg">🛒 Tambah ke Keranjang</button>
+                    <button type="submit" class="btn btn-primary btn-block btn-lg">Tambah ke Keranjang</button>
                 </form>
-                <a href="cart.php" class="btn btn-outline btn-block" style="margin-top:9px;text-align:center">Lihat Keranjang</a>
+                <a href="cart.php" class="btn btn-outline btn-block" style="margin-top:9px;text-align:center">Buka Keranjang</a>
                 <?php endif; ?>
 
                 <div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--border);font-size:.78rem;color:var(--dim);text-align:center;line-height:1.8">

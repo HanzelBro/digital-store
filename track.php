@@ -36,8 +36,8 @@ require_once 'includes/header.php';
 
 <div class="container" style="padding-top:36px;padding-bottom:72px">
     <div class="page-head">
-        <h1>🔎 Lacak Pesanan</h1>
-        <p style="color:var(--muted);margin-top:5px">Masukkan kode pesanan untuk melihat status terbaru.</p>
+        <h1>Lacak Status Pesanan</h1>
+        <p style="color:var(--muted);margin-top:5px">Masukkan kode pesanan Anda untuk memantau status verifikasi dan aktivasi.</p>
     </div>
 
     <?php if ($error): ?>
@@ -50,7 +50,7 @@ require_once 'includes/header.php';
                 <label class="form-label">Kode Pesanan</label>
                 <input type="text" name="order" class="form-control" placeholder="Contoh: DH-1A2B3C4D" value="<?= htmlspecialchars($orderCode) ?>" required>
             </div>
-            <button type="submit" class="btn btn-primary btn-block btn-lg">Lihat Status</button>
+            <button type="submit" class="btn btn-primary btn-block btn-lg">Cek Status Pesanan</button>
         </form>
     </div>
 
@@ -59,7 +59,7 @@ require_once 'includes/header.php';
             <div class="s-title">Status Pesanan</div>
             <div class="s-row"><span class="s-label">Kode</span><span class="mono"><?= htmlspecialchars($order['order_code']) ?></span></div>
             <div class="s-row"><span class="s-label">Nama</span><span><?= htmlspecialchars($order['customer_name']) ?></span></div>
-            <div class="s-row"><span class="s-label">Email</span><span><?= htmlspecialchars($order['customer_email']) ?></span></div>
+            <div class="s-row"><span class="s-label">Email</span><span><?= htmlspecialchars(maskEmail($order['customer_email'])) ?></span></div>
             <div class="s-row"><span class="s-label">Total</span><span><?= formatPrice($order['total_amount']) ?></span></div>
             <div class="s-row"><span class="s-label">Metode Bayar</span><span><?= ucwords(str_replace('_', ' ', $order['payment_method'])) ?></span></div>
             <div class="s-row">

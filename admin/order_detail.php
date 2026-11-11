@@ -13,6 +13,9 @@ if (!$order) { header('Location: orders.php'); exit; }
 
 // Update status or delete order
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!verifyCsrfToken()) {
+        die('Akses ditolak: CSRF token tidak valid.');
+    }
     if (isset($_POST['delete_order'])) {
         $stmt2 = $pdo->prepare("DELETE FROM payment_confirmations WHERE order_id = ?");
         $stmt2->execute([$order['id']]);
@@ -55,6 +58,7 @@ $confirmation = $conf->fetch();
     <div style="display:flex;gap:10px;align-items:center;">
         <a href="orders.php" class="btn btn-outline">← Kembali</a>
         <form method="POST" onsubmit="return confirm('Hapus pesanan ini beserta semua detailnya?');" style="margin:0">
+            <?= csrfField() ?>
             <button type="submit" name="delete_order" value="1" class="btn btn-danger">🗑 Hapus Pesanan</button>
         </form>
     </div>
@@ -138,6 +142,7 @@ $confirmation = $conf->fetch();
             <span class="status status-<?= htmlspecialchars($order['payment_status']) ?>" style="font-size:.8rem;padding:6px 14px"><?= htmlspecialchars($order['payment_status']) ?></span>
         </div>
         <form method="POST">
+            <?= csrfField() ?>
             <input type="hidden" name="update_status" value="1">
             <div class="form-group">
                 <label class="form-label">Ubah Status</label>

@@ -41,7 +41,7 @@ $total = cartTotal();
                 <div class="cart-item">
                     <div class="ci-icon">
                         <?php if (!empty($image)): ?>
-                            <img src="<?= SITE_URL ?>/assets/img/<?= htmlspecialchars($image) ?>" alt="">
+                            <img src="<?= SITE_URL ?>/assets/img/<?= htmlspecialchars($image) ?>" alt="<?= htmlspecialchars($item['name']) ?>" width="50" height="50">
                         <?php else: ?>
                             <?= htmlspecialchars($icon) ?>
                         <?php endif; ?>
@@ -49,14 +49,15 @@ $total = cartTotal();
                     <div class="ci-info">
                         <div class="ci-name"><?= htmlspecialchars($item['name']) ?></div>
                         <div class="ci-price"><?= formatPrice($item['price']) ?></div>
-                        <div style="font-size:.78rem;color:var(--alight);margin-top:3px">📅 Durasi: <?= htmlspecialchars($item['duration_label']) ?></div>
+                        <div style="font-size:.78rem;color:var(--alight);margin-top:3px">Durasi: <?= htmlspecialchars($item['duration_label']) ?></div>
                     </div>
                     <a href="cart.php?remove=<?= urlencode($item['cart_key']) ?>" class="btn btn-danger btn-sm"
+                       aria-label="Hapus <?= htmlspecialchars($item['name']) ?> dari keranjang"
                        onclick="return confirm('Hapus item ini?')">✕ Hapus</a>
                 </div>
                 <?php endforeach; ?>
                 <div style="margin-top:14px">
-                    <a href="index.php" class="btn btn-ghost">← Lanjut Belanja</a>
+                    <a href="index.php" class="btn btn-ghost">Kembali ke Katalog</a>
                 </div>
             </div>
 
@@ -90,9 +91,9 @@ $total = cartTotal();
                     <span><?= formatPrice($total) ?></span>
                 </div>
                 <a href="checkout.php" class="btn btn-primary btn-block btn-lg" style="margin-top:18px">
-                    Lanjut ke Checkout →
+                    Lanjut ke Pembayaran
                 </a>
-                <p style="text-align:center;font-size:.74rem;color:var(--dim);margin-top:10px">🔒 Pembayaran aman</p>
+                <p style="text-align:center;font-size:.78rem;color:var(--dim);margin-top:10px">Pembayaran aman dengan aktivasi instan</p>
             </div>
         </div>
     <?php endif; ?>

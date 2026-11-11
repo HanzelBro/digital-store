@@ -1,0 +1,29 @@
+# ==============================================================================
+# HanzelStore - Apache Security Configuration
+# ==============================================================================
+
+# 1. Matikan Directory Browsing (Mencegah pengunjung melihat struktur direktori)
+Options -Indexes
+
+# 2. Blokir akses ke file & direktori sensitif (.git, .env, .gitignore, README.md, dll)
+<FilesMatch "^\.git|\.env|composer\.(json|lock)|\.gitignore|README\.md">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# 3. Blokir akses langsung ke file konfigurasi template
+<FilesMatch "^(db\.example\.php|database\.sql)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# 4. HTTP Security Headers
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set X-XSS-Protection "1; mode=block"
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# 5. Charset Default UTF-8
+AddDefaultCharset UTF-8
